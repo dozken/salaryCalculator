@@ -1,5 +1,6 @@
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 
 public class Main {
 
@@ -18,8 +19,8 @@ public class Main {
 
         BigDecimal mrp25 = MRP.multiply(BigDecimal.valueOf(25));//.setScale(2, RoundingMode.HALF_DOWN);
         BigDecimal zp =
-//                BigDecimal.valueOf(42500)
-                app.getZP(BigDecimal.valueOf(60709.1),true);
+                BigDecimal.valueOf(10_000_000)
+//                app.getZP(BigDecimal.valueOf(60709.1),true);
 //                app.getZP(mrp25, hasOPV);
 //                MRP.multiply(BigDecimal.valueOf(25))
         ;
@@ -28,11 +29,20 @@ public class Main {
         //        BigDecimal zpOfDauke = BigDecimal.valueOf(55_500);
         BigDecimal zpOfDauke = zp;
         BigDecimal minOklad = zpOfDauke;
-        BigDecimal maxOklad = zpOfDauke.multiply(BigDecimal.valueOf(2));
-        BigDecimal oklad = app.findOklad(zpOfDauke, minOklad, maxOklad, hasOPV);
-        System.out.println("oklad binary search: " + oklad);
+        BigDecimal maxOklad = zpOfDauke.multiply(BigDecimal.valueOf(1.2));
 
+        long lStartTime = Instant.now().toEpochMilli();
+        BigDecimal oklad = app.findOklad(zpOfDauke, minOklad, maxOklad, hasOPV);
+        long lEndTime = Instant.now().toEpochMilli();
+        long output = lEndTime - lStartTime;
+        System.out.println("oklad binary search: " + oklad);
+        System.out.println("Elapsed time in milliseconds: " + output);
+
+        lStartTime = Instant.now().toEpochMilli();
         app.findOkladEmperative(zpOfDauke, minOklad, maxOklad, hasOPV);
+        lEndTime = Instant.now().toEpochMilli();
+        output = lEndTime - lStartTime;
+        System.out.println("Elapsed time in milliseconds: " + output);
 
     }
 
@@ -48,6 +58,7 @@ public class Main {
     }
 
     private BigDecimal findOklad(BigDecimal zpOfDauke, BigDecimal minOPV, BigDecimal maxOPV, boolean hasOPV) {
+
         BigDecimal middleOklad = minOPV.add(maxOPV).divide(BigDecimal.valueOf(2)).setScale(2,
                 RoundingMode.HALF_DOWN);
 
@@ -83,10 +94,10 @@ public class Main {
 
     public BigDecimal getKOR(BigDecimal oklad, boolean hasOPV) {
 //        oklad = hasOPV ? oklad * 0.1 : oklad;
-        oklad = hasOPV ? oklad.multiply(BigDecimal.valueOf(0.1)) : oklad;
+        BigDecimal opvs = hasOPV ? oklad.multiply(BigDecimal.valueOf(0.1)) : BigDecimal.ZERO;
 
 //        double kor = (oklad - MZP) * 0.9;
-        BigDecimal kor = oklad.subtract(MZP).multiply(BigDecimal.valueOf(0.9)).setScale(2,
+        BigDecimal kor = oklad.subtract(opvs).subtract(MZP).multiply(BigDecimal.valueOf(0.9)).setScale(2,
                 RoundingMode.HALF_DOWN);
 
 //        return kor < 0 ? 0 : kor;
